@@ -214,7 +214,7 @@ class _CupertinoControlsState extends State<CupertinoControls>
     if (chewieController.subtitleBuilder != null) {
       return chewieController.subtitleBuilder!(
         context,
-        currentSubtitle.first!.text,
+        currentSubtitle.first!,
       );
     }
 
