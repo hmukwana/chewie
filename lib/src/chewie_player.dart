@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:chewie/src/chewie_progress_colors.dart';
+// import 'package:chewie/src/material/models/options_translation.dart';
+import 'package:chewie/src/notifiers/ios_cast_service_notifier.dart';
 import 'package:chewie/src/models/option_item.dart';
 import 'package:chewie/src/models/options_translation.dart';
 import 'package:chewie/src/models/subtitle_model.dart';
@@ -43,6 +45,7 @@ class ChewieState extends State<Chewie> {
 
   bool get isControllerFullScreen => widget.controller.isFullScreen;
   late PlayerNotifier notifier;
+  late IOSCastServiceNotifier iosCastNotifier;
 
   @override
   void initState() {
@@ -85,8 +88,15 @@ class ChewieState extends State<Chewie> {
   Widget build(BuildContext context) {
     return ChewieControllerProvider(
       controller: widget.controller,
-      child: ChangeNotifierProvider<PlayerNotifier>.value(
-        value: notifier,
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<PlayerNotifier>.value(
+            value: notifier,
+          ),
+          ChangeNotifierProvider<IOSCastServiceNotifier>.value(
+            value: IOSCastServiceNotifier(),
+          ),
+        ],
         builder: (context, w) => const PlayerWithControls(),
       ),
     );
@@ -246,7 +256,7 @@ class ChewieState extends State<Chewie> {
 class ChewieController extends ChangeNotifier {
   ChewieController({
     required this.videoPlayerController,
-    this.optionsTranslation,
+    this.isCastingEnabled = false,
     this.aspectRatio,
     this.autoInitialize = false,
     this.autoPlay = false,
@@ -259,6 +269,7 @@ class ChewieController extends ChangeNotifier {
     this.overlay,
     this.showControlsOnInitialize = true,
     this.showOptions = true,
+    this.optionsTranslation,
     this.optionsBuilder,
     this.additionalOptions,
     this.showControls = true,
@@ -293,6 +304,7 @@ class ChewieController extends ChangeNotifier {
     OptionsTranslation? optionsTranslation,
     double? aspectRatio,
     bool? autoInitialize,
+    bool? isCastingEnabled,
     bool? autoPlay,
     Duration? startAt,
     bool? looping,
@@ -386,6 +398,10 @@ class ChewieController extends ChangeNotifier {
   /// won't be shown.
   final bool showOptions;
 
+  /// If enabled, a cast button is provided to the user to stream
+  /// the video content to a cast-device (e.g. Google Chromecast)
+  final bool isCastingEnabled;
+
   /// Pass your translations for the options like:
   /// - PlaybackSpeed
   /// - Subtitles
@@ -409,7 +425,7 @@ class ChewieController extends ChangeNotifier {
   final List<OptionItem> Function(BuildContext context)? additionalOptions;
 
   /// Define here your own Widget on how your n'th subtitle will look like
-  Widget Function(BuildContext context, dynamic subtitle)? subtitleBuilder;
+  Widget Function(BuildContext context, Subtitle subtitle)? subtitleBuilder;
 
   /// Add a List of Subtitles here in `Subtitles.subtitle`
   Subtitles? subtitle;

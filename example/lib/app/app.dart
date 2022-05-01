@@ -112,7 +112,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
       videoPlayerController: _videoPlayerController1,
       autoPlay: true,
       looping: true,
-
+      isCastingEnabled: true,
       additionalOptions: (context) {
         return <OptionItem>[
           OptionItem(
@@ -205,6 +205,34 @@ class _ChewieDemoState extends State<ChewieDemo> {
                     onPressed: () {
                       setState(() {
                         _videoPlayerController1.pause();
+                        _videoPlayerController1.seekTo(const Duration());
+                        _chewieController = ChewieController(
+                          videoPlayerController: _videoPlayerController1,
+                          autoPlay: true,
+                          looping: true,
+                          isCastingEnabled: true,
+                          subtitle: Subtitles([
+                            Subtitle(
+                              index: 0,
+                              start: Duration.zero,
+                              end: const Duration(seconds: 10),
+                              text: 'Hello from subtitles',
+                            ),
+                            Subtitle(
+                              index: 0,
+                              start: const Duration(seconds: 10),
+                              end: const Duration(seconds: 20),
+                              text: 'Whats up? :)',
+                            ),
+                          ]),
+                          subtitleBuilder: (context, _subtitle) => Container(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Text(
+                              (_subtitle.text ?? '').toString(),
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        );
                         _videoPlayerController1.seekTo(Duration.zero);
                         _createChewieController();
                       });
@@ -225,6 +253,7 @@ class _ChewieDemoState extends State<ChewieDemo> {
                           videoPlayerController: _videoPlayerController2,
                           autoPlay: true,
                           looping: true,
+                          isCastingEnabled: true,
                           /* subtitle: Subtitles([
                             Subtitle(
                               index: 0,

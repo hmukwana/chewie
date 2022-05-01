@@ -1,18 +1,24 @@
 import 'dart:async';
 
+import 'package:cast/cast.dart';
 import 'package:chewie/src/center_play_button.dart';
 import 'package:chewie/src/chewie_player.dart';
 import 'package:chewie/src/chewie_progress_colors.dart';
 import 'package:chewie/src/helpers/utils.dart';
-import 'package:chewie/src/material/material_progress_bar.dart';
+// import 'package:chewie/src/material/models/option_item.dart';
+import 'package:chewie/src/material/widgets/cast_button.dart';
 import 'package:chewie/src/material/widgets/options_dialog.dart';
 import 'package:chewie/src/material/widgets/playback_speed_dialog.dart';
 import 'package:chewie/src/models/option_item.dart';
 import 'package:chewie/src/models/subtitle_model.dart';
 import 'package:chewie/src/notifiers/index.dart';
+import 'package:chewie/src/notifiers/ios_cast_service_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
+
+import 'material_progress_bar.dart';
 
 class MaterialControls extends StatefulWidget {
   const MaterialControls({
@@ -148,6 +154,7 @@ class _MaterialControlsState extends State<MaterialControls>
           duration: const Duration(milliseconds: 250),
           child: Row(
             children: [
+              _buildCastButton(),
               _buildSubtitleToggle(),
               if (chewieController.showOptions) _buildOptionsButton(),
             ],
@@ -155,6 +162,84 @@ class _MaterialControlsState extends State<MaterialControls>
         ),
       ),
     );
+  }
+
+  Future<void> onCastButtonTap({
+    List<CastDevice>? iosDevices,
+  }) async {
+    _hideTimer?.cancel();
+
+    await showModalBottomSheet<CastDevice>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      builder: (context) => StreamBuilder<List<CastDevice>>(
+        stream: iosDevices != null
+            ? Stream.value(iosDevices)
+            : CastDiscoveryService().search().asStream(),
+        initialData: const <CastDevice>[],
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: snapshot.data!.length,
+              itemBuilder: (c, i) => ListTile(
+                leading: const Icon(Icons.cast),
+                title: Text(snapshot.data![i].name),
+                onTap: () {
+                  Navigator.pop(context);
+                  notifier.connectToCastDevice(
+                      chewieController, snapshot.data![i]);
+                },
+              ),
+            );
+          }
+          return const CircularProgressIndicator.adaptive();
+        },
+      ),
+    );
+
+    if (_latestValue.isPlaying) {
+      _startHideTimer();
+    }
+  }
+
+  Widget _buildCastButton() {
+    if (Platform.isIOS && chewieController.isCastingEnabled) {
+      return Consumer<IOSCastServiceNotifier>(
+        builder: (context, not, w) {
+          not.startDiscovery();
+          return AnimatedOpacity(
+            opacity: notifier.hideStuff ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 250),
+            child: CastButton(
+              onTap: () => onCastButtonTap(
+                iosDevices: not.foundDevices,
+              ),
+            ),
+          );
+        },
+      );
+    }
+    if (chewieController.isCastingEnabled) {
+      return FutureBuilder<List<CastDevice>>(
+        future: CastDiscoveryService().search(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+            return AnimatedOpacity(
+              opacity: notifier.hideStuff ? 0.0 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              child: CastButton(
+                onTap: onCastButtonTap,
+              ),
+            );
+          }
+          return Container();
+        },
+      );
+    }
+
+    return Container();
   }
 
   Widget _buildOptionsButton() {
@@ -221,7 +306,7 @@ class _MaterialControlsState extends State<MaterialControls>
     if (chewieController.subtitleBuilder != null) {
       return chewieController.subtitleBuilder!(
         context,
-        currentSubtitle.first!.text,
+        currentSubtitle.first!,
       );
     }
 
