@@ -1,7 +1,6 @@
 import 'package:chewie/src/chewie_progress_colors.dart';
 import 'package:chewie/src/progress_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:video_player/video_player.dart';
 
 class MaterialVideoProgressBar extends StatelessWidget {
@@ -27,9 +26,9 @@ class MaterialVideoProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return VideoProgressBar(
       controller,
-      barHeight: 2,
+      barHeight: 10,
       handleHeight: 6,
-      drawShadow: false,
+      drawShadow: true,
       colors: colors,
       onDragEnd: onDragEnd,
       onDragStart: onDragStart,
