@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cast: ^1.0.0
+  cast: ^1.1.1
   cupertino_icons: ^1.0.3
   flutter_mdns_plugin: ^0.0.3
   mime: ^1.0.0
